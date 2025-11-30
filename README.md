@@ -1,274 +1,275 @@
-# Nexus - Framework-Agnostic PHP Packages for ERP Systems
+# Nexus\Notifier
 
-Nexus is a **package-only monorepo** containing 50+ atomic, reusable PHP packages for building Enterprise Resource Planning (ERP) systems. Each package is framework-agnostic, making them usable with Laravel, Symfony, Slim, or any other PHP framework.
+**Framework-agnostic notification engine for multi-channel communication.**
 
-## 📖 The Philosophy: "Pure Business Logic, Framework Independent"
+## Purpose
 
-The core philosophy of Nexus is **Framework Agnosticism**. Business logic should be portable and reusable across different frameworks and applications.
+`Nexus\Notifier` provides a unified, decoupled interface for sending notifications across multiple channels (Email, SMS, Push Notifications, In-App Messages) without coupling your business logic to specific vendors or delivery mechanisms.
 
-- **🎯 Pure Business Logic**: Packages contain only business rules and domain logic
-- **🔌 Interface-Driven**: All external dependencies defined as contracts
-- **📦 Atomic & Publishable**: Each package can be published independently to Packagist
-- **🧪 Testable**: Pure PHP logic with mockable dependencies
-- **🌍 Framework-Agnostic**: Works with Laravel, Symfony, or any PHP framework
+## Core Philosophy
 
-## 🏗️ Architecture
+**"Define the message once, deliver everywhere."**
 
-### 📦 Atomic Packages
+This package implements the **Channel Agnosticism** principle: your business logic triggers notifications without knowing *how* they're delivered. The consuming application (Atomy) provides the concrete implementations for each channel.
 
-All packages in `packages/` are self-contained units of functionality designed to be:
+## Key Features
 
-- **Framework-Agnostic:** Pure PHP 8.3+ logic with no framework dependencies
-- **Persistence-Agnostic:** No migrations or models - data access defined via interfaces
-- **Publishable:** Each package can be published independently to Packagist
-- **Contract-Driven:** All external dependencies injected as interfaces
-- **Stateless:** Long-term state externalized via storage interfaces
+- **Multi-Channel Support**: Email, SMS, Push Notifications, In-App messaging
+- **Channel Agnosticism**: Business logic remains decoupled from delivery mechanisms
+- **Single Definition**: One notification event contains all channel variations
+- **Asynchronous Delivery**: Queue-based delivery prevents blocking
+- **Priority Handling**: Critical notifications bypass normal queues
+- **Template Engine**: Variable substitution and multi-language support
+- **Delivery Tracking**: Complete lifecycle tracking (Pending → Sent → Delivered → Failed)
+- **Preference Management**: Per-recipient channel and category preferences
+- **Audit Trail**: Full logging integration via `Nexus\AuditLogger`
+- **Rate Limiting**: Prevents spam and abuse
+- **Fallback Channels**: Automatic fallback if primary channel fails
 
-## 📦 Available Packages (51 packages)
+## Architecture
 
-### Core Infrastructure (8 packages)
-- **`Nexus\Tenant`** - Multi-tenancy context and isolation engine
-- **`Nexus\Setting`** - Global and tenant-specific configuration management
-- **`Nexus\Sequencing`** - Auto-numbering with atomic counter management
-- **`Nexus\Period`** - Fiscal period management and transaction validation
-- **`Nexus\AuditLogger`** - Timeline feeds and audit trails
-- **`Nexus\EventStream`** - Event sourcing for critical domains (Finance GL, Inventory)
-- **`Nexus\Uom`** - Unit of measurement management and conversion
-- **`Nexus\Monitoring`** - Observability with telemetry, health checks, alerting, SLO tracking
+This package follows Nexus's **"Logic in Packages, Implementation in Applications"** principle:
 
-### Identity & Security (3 packages)
-- **`Nexus\Identity`** - Authentication, RBAC, MFA, session/token management
-- **`Nexus\Crypto`** - Cryptographic operations and key management
-- **`Nexus\Audit`** - Advanced audit capabilities (extends AuditLogger)
+- **Package (`packages/Notifier/`)**: Defines contracts, business logic, and value objects
+- **Application (`apps/Atomy/`)**: Implements repositories, models, and channel handlers
 
-### Finance & Accounting (7 packages)
-- **`Nexus\Finance`** - General ledger, journal entries, double-entry bookkeeping
-- **`Nexus\Accounting`** - Financial statements, period close, consolidation
-- **`Nexus\Receivable`** - Customer invoicing, collections, credit control
-- **`Nexus\Payable`** - Vendor bills, payment processing, 3-way matching
-- **`Nexus\CashManagement`** - Bank reconciliation, cash flow forecasting
-- **`Nexus\Budget`** - Budget planning and variance tracking
-- **`Nexus\Assets`** - Fixed asset management, depreciation
-- **`Nexus\Currency`** - Multi-currency management and exchange rates
+### Package Structure
 
-### Sales & Operations (6 packages)
-- **`Nexus\Sales`** - Quotation-to-order lifecycle, pricing engine
-- **`Nexus\Inventory`** - Stock management with lot/serial tracking
-- **`Nexus\Warehouse`** - Warehouse operations and bin management
-- **`Nexus\Procurement`** - Purchase requisitions, POs, goods receipt
-- **`Nexus\Manufacturing`** - Bill of materials, work orders, MRP
-- **`Nexus\Product`** - Product catalog, pricing, categorization
+```
+packages/Notifier/
+├── composer.json
+├── LICENSE
+├── README.md
+└── src/
+    ├── Contracts/              # Interfaces (REQUIRED)
+    │   ├── NotificationManagerInterface.php
+    │   ├── NotificationInterface.php
+    │   ├── NotifiableInterface.php
+    │   ├── NotificationChannelInterface.php
+    │   ├── NotificationTemplateRepositoryInterface.php
+    │   ├── NotificationHistoryRepositoryInterface.php
+    │   ├── NotificationRendererInterface.php
+    │   ├── NotificationQueueInterface.php
+    │   ├── DeliveryStatusTrackerInterface.php
+    │   └── NotificationPreferenceRepositoryInterface.php
+    ├── Exceptions/             # Domain exceptions
+    │   ├── NotificationException.php
+    │   ├── NotificationNotFoundException.php
+    │   ├── InvalidChannelException.php
+    │   ├── InvalidRecipientException.php
+    │   ├── DeliveryFailedException.php
+    │   ├── RateLimitExceededException.php
+    │   └── TemplateRenderException.php
+    ├── Services/               # Business logic
+    │   ├── NotificationManager.php
+    │   └── ChannelRouter.php
+    └── ValueObjects/           # Immutable data structures
+        ├── Priority.php
+        ├── Category.php
+        ├── DeliveryStatus.php
+        ├── NotificationContent.php
+        └── ChannelType.php
+```
 
-### Human Resources (3 packages)
-- **`Nexus\Hrm`** - Leave, attendance, performance reviews
-- **`Nexus\Payroll`** - Payroll processing framework
-- **`Nexus\PayrollMysStatutory`** - Malaysian statutory calculations (EPF, SOCSO, PCB)
+## Requirements Addressed
 
-### Customer & Partner Management (4 packages)
-- **`Nexus\Party`** - Customers, vendors, employees, contacts
-- **`Nexus\Crm`** - Leads, opportunities, sales pipeline
-- **`Nexus\Marketing`** - Campaigns, A/B testing, GDPR compliance
-- **`Nexus\FieldService`** - Work orders, technicians, service contracts
+This package addresses the following requirements from `REQUIREMENTS.csv`:
 
-### Integration & Automation (7 packages)
-- **`Nexus\Connector`** - Integration hub with circuit breaker, OAuth
-- **`Nexus\Workflow`** - Process automation, state machines
-- **`Nexus\Notifier`** - Multi-channel notifications (email, SMS, push, in-app)
-- **`Nexus\Scheduler`** - Task scheduling and job management
-- **`Nexus\DataProcessor`** - OCR, ETL interfaces (interface-only package)
-- **`Nexus\Intelligence`** - AI-assisted automation and predictions
-- **`Nexus\Geo`** - Geocoding, geofencing, routing
-- **`Nexus\Routing`** - Route optimization and caching
+- **FR-NOT-101**: Channel agnosticism - business services trigger notifications without knowing delivery method
+- **FR-NOT-102**: Single notification definition containing all channel variations
+- **FR-NOT-103**: Recipient abstraction via `NotifiableInterface`
+- **FR-NOT-104**: Asynchronous notification delivery via queue
+- **BUS-NOT-0001 to BUS-NOT-0010**: Business requirements for multi-channel delivery, consistency, retry logic, etc.
+- **FUN-NOT-0185 to FUN-NOT-0204**: Functional requirements for notification management
 
-### Reporting & Data (5 packages)
-- **`Nexus\Reporting`** - Report definition and execution engine
-- **`Nexus\Export`** - Multi-format export (PDF, Excel, CSV, JSON)
-- **`Nexus\Import`** - Data import with validation and transformation
-- **`Nexus\Analytics`** - Business intelligence, predictive models
-- **`Nexus\Document`** - Document management with versioning
+See `REQUIREMENTS.csv` for complete list.
 
-### Compliance & Governance (4 packages)
-- **`Nexus\Compliance`** - Process enforcement, operational compliance
-- **`Nexus\Statutory`** - Reporting compliance, statutory filing
-- **`Nexus\Backoffice`** - Company structure, offices, departments
-- **`Nexus\OrgStructure`** - Organizational hierarchy management
+## Installation
 
-### Support & Utilities (3 packages)
-- **`Nexus\Storage`** - File storage abstraction layer
-- **`Nexus\ProjectManagement`** - Projects, tasks, timesheets, milestones
-- **`Nexus\FeatureFlags`** - Feature flag management
-
-## 🛠️ Getting Started
-
-### Prerequisites
-- PHP 8.3+
-- Composer
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url> nexus
-   cd nexus
-   ```
-
-2. **Install Dependencies:**
-   ```bash
-   composer install
-   ```
-
-3. **Explore Packages:**
-   ```bash
-   # Browse available packages
-   ls packages/
-   
-   # Read package documentation
-   cat packages/Tenant/README.md
-   cat packages/Finance/README.md
-   ```
-
-## 📚 Usage
-
-### Installing a Package
-
-Each package can be installed independently in your PHP application:
+This package is part of the Nexus monorepo. To use it in the Atomy application:
 
 ```bash
-# In your Laravel, Symfony, or other PHP application
-composer require nexus/tenant
-composer require nexus/finance
-composer require nexus/receivable
+composer require nexus/notifier:"*@dev"
 ```
 
-### Implementing Package Contracts
+## Usage
 
-Packages define interfaces, your application provides implementations:
+### 1. Define a Notification
 
-```php
-// Package defines the interface
-namespace Nexus\Tenant\Contracts;
-
-interface TenantRepositoryInterface
-{
-    public function findById(string $id): ?TenantInterface;
-    public function save(TenantInterface $tenant): void;
-}
-
-// Your Laravel application implements it
-namespace App\Repositories;
-
-use Nexus\Tenant\Contracts\TenantRepositoryInterface;
-use Nexus\Tenant\Contracts\TenantInterface;
-use App\Models\Tenant;
-
-final class EloquentTenantRepository implements TenantRepositoryInterface
-{
-    public function findById(string $id): ?TenantInterface
-    {
-        return Tenant::find($id);
-    }
-    
-    public function save(TenantInterface $tenant): void
-    {
-        Tenant::updateOrCreate(['id' => $tenant->getId()], [
-            'name' => $tenant->getName(),
-            'status' => $tenant->getStatus()->value,
-        ]);
-    }
-}
-
-// Bind in service provider
-$this->app->bind(
-    TenantRepositoryInterface::class,
-    EloquentTenantRepository::class
-);
-```
-
-### Using Package Services
+Create a notification class implementing `NotificationInterface`:
 
 ```php
-use Nexus\Tenant\Contracts\TenantContextInterface;
-use Nexus\Finance\Contracts\GeneralLedgerManagerInterface;
+use Nexus\Notifier\Contracts\NotificationInterface;
+use Nexus\Notifier\ValueObjects\Priority;
+use Nexus\Notifier\ValueObjects\Category;
 
-class InvoiceController
+final class PayslipAvailableNotification implements NotificationInterface
 {
     public function __construct(
-        private readonly TenantContextInterface $tenantContext,
-        private readonly GeneralLedgerManagerInterface $glManager
+        private readonly string $employeeName,
+        private readonly string $month,
+        private readonly string $downloadUrl
     ) {}
-    
-    public function store(Request $request)
+
+    public function toEmail(): array
     {
-        $tenantId = $this->tenantContext->getCurrentTenantId();
-        
-        // Use package business logic
-        $this->glManager->postJournalEntry($journalEntry);
+        return [
+            'subject' => "Your {$this->month} Payslip is Ready",
+            'body' => "Hello {$this->employeeName}, your payslip for {$this->month} is now available. Download it here: {$this->downloadUrl}",
+        ];
+    }
+
+    public function toSms(): string
+    {
+        return "Your {$this->month} payslip is ready. Download: {$this->downloadUrl}";
+    }
+
+    public function toPush(): array
+    {
+        return [
+            'title' => 'Payslip Available',
+            'body' => "Your {$this->month} payslip is ready",
+            'action' => $this->downloadUrl,
+        ];
+    }
+
+    public function toInApp(): array
+    {
+        return [
+            'title' => 'Payslip Available',
+            'message' => "Your {$this->month} payslip is now available for download.",
+            'link' => $this->downloadUrl,
+        ];
+    }
+
+    public function getPriority(): Priority
+    {
+        return Priority::Normal;
+    }
+
+    public function getCategory(): Category
+    {
+        return Category::Transactional;
     }
 }
 ```
 
-## 🏛️ Architectural Principles
+### 2. Send a Notification
 
-### 1. Framework Agnosticism
-- No Laravel, Symfony, or framework-specific code in packages
-- Use PSR interfaces (`psr/log`, `psr/http-client`, `psr/cache`)
-- All framework integration happens in consuming applications
+```php
+use Nexus\Notifier\Contracts\NotificationManagerInterface;
 
-### 2. Contract-Driven Design
-- Packages define needs via interfaces
-- Consuming applications provide implementations
-- Dependency injection for all external dependencies
+final class PayrollManager
+{
+    public function __construct(
+        private readonly NotificationManagerInterface $notifier
+    ) {}
 
-### 3. Stateless Design
-- No session state in package classes
-- Long-term state externalized via storage interfaces
-- Horizontally scalable by design
+    public function publishPayslip(string $employeeId): void
+    {
+        // Business logic to generate payslip...
+        
+        $notification = new PayslipAvailableNotification(
+            employeeName: $employee->getName(),
+            month: 'January 2025',
+            downloadUrl: $payslipUrl
+        );
 
-### 4. Modern PHP Standards
-- PHP 8.3+ with strict types
-- Constructor property promotion
-- Readonly properties for dependencies
-- Native enums for fixed value sets
-- Match expressions over switch statements
+        // Send via all preferred channels
+        $this->notifier->send($employee, $notification);
+    }
+}
+```
 
-## 📖 Documentation
+### 3. Implement Notifiable
 
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Architectural guidelines and rules
-- **[docs/NEXUS_PACKAGES_REFERENCE.md](docs/NEXUS_PACKAGES_REFERENCE.md)** - Complete package capabilities reference
-- **[.github/copilot-instructions.md](.github/copilot-instructions.md)** - Development guidelines
-- **Package READMEs** - Individual package documentation (e.g., `packages/Finance/README.md`)
+Your recipient entity must implement `NotifiableInterface`:
 
-## 🤝 Contributing
+```php
+use Nexus\Notifier\Contracts\NotifiableInterface;
 
-Please refer to [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architectural guidelines.
+final class Employee implements NotifiableInterface
+{
+    public function getNotificationEmail(): ?string
+    {
+        return $this->email;
+    }
 
-### Key Rules:
-1. **Packages must be framework-agnostic** - No Laravel, Symfony, or framework-specific code
-2. **Packages define persistence needs via Contracts** - No migrations or models in packages
-3. **All dependencies must be interfaces** - Use dependency injection
-4. **Modern PHP 8.3+ standards** - Use latest language features
-5. **Consult NEXUS_PACKAGES_REFERENCE.md** - Avoid reimplementing existing functionality
+    public function getNotificationPhone(): ?string
+    {
+        return $this->mobilePhone;
+    }
 
-### Creating a New Package
+    public function getNotificationDeviceTokens(): array
+    {
+        return $this->deviceTokens ?? [];
+    }
 
-1. Create `packages/NewPackage/` directory
-2. Run `composer init` (require `"php": "^8.3"`)
-3. Define PSR-4 autoloader: `"Nexus\\NewPackage\\": "src/"`
-4. Create `src/Contracts/`, `src/Services/`, `src/Exceptions/`
-5. Write comprehensive `README.md` with usage examples
-6. Add MIT `LICENSE` file
-7. Update root `composer.json` repositories array
+    public function getNotificationLocale(): string
+    {
+        return $this->preferredLocale ?? 'en';
+    }
 
-## 📄 License
+    public function getNotificationTimezone(): string
+    {
+        return $this->timezone ?? 'UTC';
+    }
+}
+```
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## User Stories Solved
 
-## 🔗 Links
+### 1. System Administrator Story
+**Problem**: Switching SMS vendors requires code changes across multiple packages.
 
-- **Package Reference Guide**: [docs/NEXUS_PACKAGES_REFERENCE.md](docs/NEXUS_PACKAGES_REFERENCE.md)
-- **Architecture Documentation**: [ARCHITECTURE.md](ARCHITECTURE.md)
-- **Implementation Summaries**: `docs/*_IMPLEMENTATION_SUMMARY.md`
+**Solution**: 
+```php
+// Only change binding in AppServiceProvider
+$this->app->singleton(SmsChannelInterface::class, MessageBirdSmsChannel::class);
+// No changes to Payroll, FieldService, or any other package!
+```
 
----
+### 2. Package Developer Story
+**Problem**: Implementing notifications requires understanding SMTP, SMS APIs, etc.
 
-**Nexus** - Building the future of modular ERP systems with framework-agnostic PHP packages.
+**Solution**:
+```php
+// Simple, focused business logic
+$this->notifier->send($user, new InvoiceReadyNotification($invoice));
+```
+
+### 3. Customer Relations Manager Story
+**Problem**: Need multi-channel confirmation after booking.
+
+**Solution**: The system automatically sends both email and SMS based on recipient preferences when you call `$notifier->send()`.
+
+## Dependencies
+
+This package depends on:
+- **`nexus/audit-logger`**: For audit trail logging
+- **`nexus/connector`**: For actual email/SMS delivery via external providers
+- **`nexus/identity`**: For recipient user data
+- **`nexus/setting`**: For notification preferences
+
+## Integration Points
+
+The consuming application (Atomy) must implement:
+
+1. **Channel Handlers**: Email, SMS, Push, In-App channel implementations
+2. **Repositories**: Template, History, Preference repositories with database persistence
+3. **Queue System**: For asynchronous delivery
+4. **Service Provider Bindings**: Wire all interfaces to concrete implementations
+
+See `docs/NOTIFIER_IMPLEMENTATION.md` for complete implementation guide.
+
+## Testing
+
+Package tests are unit tests with mocked repositories. Atomy tests are feature tests with database.
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Support
+
+Part of the Nexus ERP Monorepo.
